@@ -1,0 +1,5 @@
+/target
+.env
+config.toml
+tweet.txt
+.vscode/
