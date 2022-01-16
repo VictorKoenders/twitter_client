@@ -392,6 +392,10 @@ fn draw_tweet(ctx: &mut crate::Context, ui: &mut Ui, tweet: &Tweet) {
                     }
                 })
             });
+
+            if let Some(quoted) = &tweet.quoted_status {
+                draw_tweet(ctx, ui, quoted);
+            }
         }
     });
 }
