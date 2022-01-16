@@ -1,14 +1,18 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod background;
 mod image;
 mod ui;
 
 use background::{Background, ToUI};
+use egui_winit::WindowSettings;
+use epi::{file_storage::FileStorage, Storage};
 use glium::glutin::{
     self,
     event::{ElementState, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 struct RepaintSignal {
     proxy: std::sync::Mutex<glutin::event_loop::EventLoopProxy<ToUI>>,
@@ -25,9 +29,10 @@ fn main() {
     pretty_env_logger::init();
 
     let title = "Rusty twitter client";
+    let mut persistence = Persistence::from_app_name(title);
     let event_loop = EventLoop::with_user_event();
     let background = background::spawn(event_loop.create_proxy());
-    let display = create_display(&event_loop, title);
+    let display = create_display(&persistence, &event_loop, title);
 
     let mut integration = Integration::new(
         title,
@@ -124,7 +129,48 @@ fn main() {
 
             _ => (),
         }
+        persistence.maybe_autosave(&display);
     });
+}
+
+pub struct Persistence {
+    storage: Option<FileStorage>,
+    last_auto_save: std::time::Instant,
+}
+
+impl Persistence {
+    const WINDOW_KEY: &'static str = "window";
+    const AUTO_SAVE_INTERVAL: Duration = Duration::from_secs(5 * 60);
+
+    pub fn from_app_name(app_name: &str) -> Self {
+        Self {
+            storage: FileStorage::from_app_name(app_name),
+            last_auto_save: std::time::Instant::now(),
+        }
+    }
+
+    pub fn save(&mut self, display: &glium::Display) {
+        if let Some(storage) = &mut self.storage {
+            epi::set_value(
+                storage,
+                Self::WINDOW_KEY,
+                &WindowSettings::from_display(display.gl_window().window()),
+            );
+            storage.flush();
+        }
+    }
+
+    pub fn maybe_autosave(&mut self, display: &glium::Display) {
+        let now = std::time::Instant::now();
+        if now - self.last_auto_save > Self::AUTO_SAVE_INTERVAL {
+            self.save(display);
+            self.last_auto_save = now;
+        }
+    }
+
+    pub fn load_window_settings(&self) -> Option<crate::WindowSettings> {
+        epi::get_value(self.storage.as_ref()?, Self::WINDOW_KEY)
+    }
 }
 
 pub struct Context<'a> {
@@ -144,7 +190,6 @@ impl Integration {
     fn new(
         title: &'static str,
         egui_glium: egui_glium::EguiGlium,
-        // window: &winit::window::Window,
         app: ui::State,
         repaint_signal: Arc<dyn epi::backend::RepaintSignal>,
         background: Background,
@@ -206,15 +251,20 @@ impl Integration {
     }
 }
 
-fn create_display(event_loop: &glutin::event_loop::EventLoop<ToUI>, title: &str) -> glium::Display {
-    let window_builder = glutin::window::WindowBuilder::new()
-        .with_resizable(true)
-        .with_inner_size(glutin::dpi::LogicalSize {
-            width: 800.0,
-            height: 600.0,
-        })
-        .with_title(title);
-
+fn create_display(
+    persistence: &Persistence,
+    event_loop: &glutin::event_loop::EventLoop<ToUI>,
+    title: &str,
+) -> glium::Display {
+    let window_settings = persistence.load_window_settings();
+    let window_builder = egui_winit::epi::window_builder(
+        &epi::NativeOptions {
+            maximized: true,
+            ..Default::default()
+        },
+        &window_settings,
+    )
+    .with_title(title);
     let context_builder = glutin::ContextBuilder::new()
         .with_depth_buffer(0)
         .with_srgb(true)
