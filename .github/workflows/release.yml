@@ -49,8 +49,8 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/release.zip
-          asset_name: Linux release.zip
           tag: ${{ github.ref }}
+          overwrite: true
 
   windows:
     name: Windows
@@ -89,6 +89,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/release.zip
-          asset_name: Windows release.zip
           tag: ${{ github.ref }}
+          overwrite: true
 

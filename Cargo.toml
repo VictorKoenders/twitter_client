@@ -11,10 +11,8 @@ dotenv = "0.15.0"
 [dependencies]
 bytes = "1.1.0"
 dotenv = "0.15.0"
-dotenv_codegen = "0.15.0"
 egg-mode = "0.16.0"
 egui = "0.16.1"
-egui-winit = "0.16.0"
 egui_glium = "0.16.0"
 epi = "0.16.0"
 futures = "0.3.19"
@@ -28,4 +26,3 @@ reqwest = "0.11.9"
 serde = { version = "1.0.133", features = ["derive"] }
 tokio = { version = "1.15.0", features = ["time", "macros"] }
 toml = "0.5.8"
-winit = "0.26.1"
