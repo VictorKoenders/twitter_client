@@ -78,10 +78,7 @@ jobs:
           TWITTER_CLIENT_SECRET: ${{ secrets.TWITTER_CLIENT_SECRET }}
 
       - name: Collect artifacts
-        run: |
-          mkdir out
-
-          zip release.zip twitter_client.exe twitter_client.pdb
+        run: Compress-Archive -Path twitter_client.exe,twitter_client.pdb -DestinationPath release.zip
         working-directory: target/release/
  
       - name: Upload twitter_client to release
