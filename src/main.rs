@@ -21,7 +21,11 @@ struct RepaintSignal {
 
 impl epi::backend::RepaintSignal for RepaintSignal {
     fn request_repaint(&self) {
-        self.proxy.lock().unwrap().send_event(ToUI::Ping).unwrap();
+        self.proxy
+            .lock()
+            .unwrap()
+            .send_event(ToUI::Repaint)
+            .unwrap();
     }
 }
 
@@ -120,6 +124,9 @@ fn main() {
                 display.gl_window().window().request_redraw();
             }
 
+            glutin::event::Event::UserEvent(ToUI::Repaint) => {
+                display.gl_window().window().request_redraw();
+            }
             glutin::event::Event::UserEvent(ToUI::ImageLoaded(img)) => {
                 img.finish_load(&mut integration.frame);
             }

@@ -1,6 +1,5 @@
-mod render_tweet_debug;
-mod tweet;
-mod tweet_list;
+mod detail;
+mod list;
 
 use super::utils::*;
 use crate::background::{twitter::User, Background, ToUI};
@@ -13,9 +12,9 @@ pub struct LoggedIn {
     user: User,
     error: Option<String>,
     tweets: VecDeque<Tweet>,
-    debug_tweet: Option<Tweet>,
     expanded_tweet: Option<Tweet>,
     loading_more: bool,
+    new_version_available: Option<String>,
 }
 
 impl LoggedIn {
@@ -25,9 +24,9 @@ impl LoggedIn {
             user,
             error: None,
             tweets: VecDeque::new(),
-            debug_tweet: None,
             expanded_tweet: None,
             loading_more: false,
+            new_version_available: None,
         })
     }
 
@@ -58,34 +57,36 @@ impl LoggedIn {
                     }
                 }
             }
+            ToUI::NewVersionAvailable { url } => {
+                self.new_version_available = Some(url);
+            }
             x => log::warn!(target: "UI", "Ignoring {:?}", x),
         }
     }
 
     pub fn draw(&mut self, ctx: &mut crate::Context) {
-        if let Some(tweet) = &self.debug_tweet {
-            let mut open = true;
-            Window::new("Debug tweet")
-                .hscroll(true)
-                .vscroll(true)
-                .open(&mut open)
-                .show(ctx.ctx, |ui| {
-                    render_tweet_debug::render_tweet_debug(ui, tweet);
-                })
-                .unwrap();
-            if !open {
-                self.debug_tweet = None;
-            }
-        }
         SidePanel::left("tweet_list").show(ctx.ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.add(Label::new(RichText::new(&self.user.name).strong()));
+                ui.separator();
                 if ui.add(ClickableLink::new("log out")).clicked() {
                     ctx.background.logout();
                 }
+                if let Some(url) = self.new_version_available.as_ref() {
+                    ui.separator();
+                    ui.hyperlink_to("New version available", url);
+                }
             });
             ui.separator();
-            tweet_list::tweet_list(self, ctx.background, ui);
+            if let Some(tweet) = list::tweet_list(
+                self.tweets.iter(),
+                &mut self.loading_more,
+                &self.expanded_tweet,
+                ctx.background,
+                ui,
+            ) {
+                self.set_expanded_tweet(ctx.background, tweet);
+            }
         });
         if let Some(error) = &self.error {
             TopBottomPanel::top("tweet_error").show(ctx.ctx, |ui| {
@@ -94,7 +95,7 @@ impl LoggedIn {
         }
         if let Some(tweet) = &self.expanded_tweet {
             CentralPanel::default().show(ctx.ctx, |ui| {
-                tweet::draw_tweet(ctx, ui, tweet);
+                detail::draw_tweet(ctx, ui, tweet);
             });
         }
     }
