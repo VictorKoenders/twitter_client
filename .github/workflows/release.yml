@@ -9,6 +9,7 @@ jobs:
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    environment: release
 
     steps:
       - name: Checkout sources
@@ -31,8 +32,8 @@ jobs:
           command: build
           args: --release
         env:
-          TWITTER_ID: ${{ secrets.TWITTER_ID }}
-          TWITTER_SECRET: ${{ secrets.TWITTER_SECRET }}
+          TWITTER_CLIENT_ID: ${{ secrets.TWITTER_CLIENT_ID }}
+          TWITTER_CLIENT_SECRET: ${{ secrets.TWITTER_CLIENT_SECRET }}
 
       - name: Extract .pdb file
         run: |

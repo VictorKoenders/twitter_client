@@ -28,8 +28,8 @@ jobs:
         with:
           command: check
         env:
-          TWITTER_ID: foo
-          TWITTER_SECRET: bar
+          TWITTER_CLIENT_ID: foo
+          TWITTER_CLIENT_SECRET: bar
 
   test:
     name: Test Suite
@@ -53,8 +53,8 @@ jobs:
         with:
           command: test
         env:
-          TWITTER_ID: foo
-          TWITTER_SECRET: bar
+          TWITTER_CLIENT_ID: foo
+          TWITTER_CLIENT_SECRET: bar
 
   lints:
     name: Lints
@@ -77,8 +77,8 @@ jobs:
           command: fmt
           args: --all -- --check
         env:
-          TWITTER_ID: foo
-          TWITTER_SECRET: bar
+          TWITTER_CLIENT_ID: foo
+          TWITTER_CLIENT_SECRET: bar
 
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
@@ -86,5 +86,5 @@ jobs:
           command: clippy
           args: -- -D warnings
         env:
-          TWITTER_ID: foo
-          TWITTER_SECRET: bar
+          TWITTER_CLIENT_ID: foo
+          TWITTER_CLIENT_SECRET: bar
