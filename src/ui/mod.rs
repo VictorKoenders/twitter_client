@@ -1,4 +1,5 @@
-pub mod image;
+pub mod utils;
+
 mod logged_in;
 mod logged_out;
 
