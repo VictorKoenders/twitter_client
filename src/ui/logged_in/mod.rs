@@ -95,7 +95,9 @@ impl LoggedIn {
         }
         if let Some(tweet) = &self.expanded_tweet {
             CentralPanel::default().show(ctx.ctx, |ui| {
-                detail::draw_tweet(ctx, ui, tweet);
+                ScrollArea::both().show(ui, |ui| {
+                    detail::draw_tweet(ctx, ui, tweet);
+                });
             });
         }
     }
