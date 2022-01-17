@@ -1,9 +1,12 @@
 use egg_mode::{error::Result, *};
 use std::borrow::Cow;
 
+// Generated in build.rs
+include!(concat!(env!("OUT_DIR"), "/twitter_credentials.rs"));
+
 pub const CONSUMER: KeyPair = KeyPair {
-    key: Cow::Borrowed(dotenv_codegen::dotenv!("TWITTER_CLIENT_ID")),
-    secret: Cow::Borrowed(dotenv_codegen::dotenv!("TWITTER_CLIENT_SECRET")),
+    key: Cow::Borrowed(twitter_id()),
+    secret: Cow::Borrowed(twitter_secret()),
 };
 
 #[derive(Clone)]

@@ -1,0 +1,93 @@
+on:
+  release:
+    types: [created]
+
+name: Build release
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install apt dependencies
+        run: sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev -y
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+        env:
+          TWITTER_CLIENT_ID: ${{ secrets.TWITTER_CLIENT_ID }}
+          TWITTER_CLIENT_SECRET: ${{ secrets.TWITTER_CLIENT_SECRET }}
+
+      - name: Extract .pdb file
+        run: |
+          set -ex
+          mkdir out
+
+          objcopy --only-keep-debug twitter_client twitter_client.pdb
+          strip --strip-debug --strip-unneeded twitter_client
+          zip release.zip twitter_client twitter_client.pdb
+        working-directory: target/release/
+      
+      - name: Upload twitter_client to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/release.zip
+          tag: ${{ github.ref }}
+          asset_name: Linux.release.zip
+          overwrite: true
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    environment: release
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+        env:
+          TWITTER_CLIENT_ID: ${{ secrets.TWITTER_CLIENT_ID }}
+          TWITTER_CLIENT_SECRET: ${{ secrets.TWITTER_CLIENT_SECRET }}
+
+      - name: Collect artifacts
+        run: Compress-Archive -Path twitter_client.exe,twitter_client.pdb -DestinationPath release.zip
+        working-directory: target/release/
+ 
+      - name: Upload twitter_client to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/release.zip
+          tag: ${{ github.ref }}
+          asset_name: Windows.release.zip
+          overwrite: true
+

@@ -5,12 +5,13 @@ mod image;
 mod ui;
 
 use background::{Background, ToUI};
-use egui_winit::WindowSettings;
+use egui_glium::egui_winit::WindowSettings;
 use epi::{file_storage::FileStorage, Storage};
 use glium::glutin::{
     self,
     event::{ElementState, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
+    window::Window,
 };
 use std::{sync::Arc, time::Duration};
 
@@ -215,7 +216,7 @@ impl Integration {
 
     pub fn update(
         &mut self,
-        window: &winit::window::Window,
+        window: &Window,
     ) -> (
         bool,
         epi::backend::TexAllocationData,
@@ -238,7 +239,7 @@ impl Integration {
             .handle_output(window, &self.egui_glium.egui_ctx, egui_output);
 
         let app_output = self.frame.take_app_output();
-        let tex_allocation_data = egui_winit::epi::handle_app_output(
+        let tex_allocation_data = egui_glium::egui_winit::epi::handle_app_output(
             window,
             self.egui_glium.egui_ctx.pixels_per_point(),
             app_output,
@@ -257,7 +258,7 @@ fn create_display(
     title: &str,
 ) -> glium::Display {
     let window_settings = persistence.load_window_settings();
-    let window_builder = egui_winit::epi::window_builder(
+    let window_builder = egui_glium::egui_winit::epi::window_builder(
         &epi::NativeOptions {
             maximized: true,
             ..Default::default()
