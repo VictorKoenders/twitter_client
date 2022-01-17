@@ -1,6 +1,6 @@
 on:
   release:
-    - created
+    types: [created]
 
 name: Build release
 
