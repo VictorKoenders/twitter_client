@@ -79,7 +79,6 @@ jobs:
 
       - name: Collect artifacts
         run: |
-          set -ex
           mkdir out
 
           zip release.zip twitter_client.exe twitter_client.pdb
