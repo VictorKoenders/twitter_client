@@ -1,0 +1,49 @@
+on:
+  push:
+    tags:
+      - '*'
+
+name: Build release
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install apt dependencies
+        run: sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev -y
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+        env:
+          TWITTER_ID: ${{ secrets.TWITTER_ID }}
+          TWITTER_SECRET: ${{ secrets.TWITTER_SECRET }}
+
+      - name: Extract .pdb file
+        run: |
+          set -ex
+          mkdir out
+          cp target/release/twitter_client out/
+          objcopy --only-keep-debug out/twitter_client out/twitter_client.pdb
+          strip --strip-debug --strip-unneeded out/twitter_client
+      
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux
+          path: out
