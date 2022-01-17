@@ -39,7 +39,7 @@ jobs:
           set -ex
           mkdir out
 
-          objcopy --only-keep-debug twitter_client out/twitter_client.pdb
+          objcopy --only-keep-debug twitter_client twitter_client.pdb
           strip --strip-debug --strip-unneeded twitter_client
           zip release.zip twitter_client twitter_client.pdb
         working-directory: target/release/
@@ -50,6 +50,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/release.zip
           tag: ${{ github.ref }}
+          asset_name: Linux.release.zip
           overwrite: true
 
   windows:
@@ -87,5 +88,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/release.zip
           tag: ${{ github.ref }}
+          asset_name: Windows.release.zip
           overwrite: true
 
