@@ -9,10 +9,20 @@ pub fn draw_tweet(ctx: &mut crate::Context, ui: &mut Ui, tweet: &Tweet) {
             ui.add(Image::https(&user.profile_image_url_https, (48., 48.)));
             ui.vertical(|ui| {
                 ui.label(RichText::new(&user.name).strong());
-                ui.hyperlink_to(
-                    format!("@{}", user.screen_name),
-                    format!("https://twitter.com/{}", user.screen_name),
-                );
+                ui.horizontal(|ui| {
+                    ui.hyperlink_to(
+                        format!("@{}", user.screen_name),
+                        format!("https://twitter.com/{}", user.screen_name),
+                    );
+                    ui.separator();
+                    ui.hyperlink_to(
+                        "original",
+                        format!(
+                            "https://twitter.com/{}/status/{}",
+                            user.screen_name, tweet.id
+                        ),
+                    );
+                });
             });
         });
         if let Some(description) = user.description.as_ref() {

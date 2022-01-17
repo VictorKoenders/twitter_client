@@ -1,6 +1,6 @@
 use super::LoggedIn;
 use crate::background::Background;
-use crate::ui::utils::ClickableLink;
+// use crate::ui::utils::ClickableLink;
 use egui::*;
 
 pub fn tweet_list(state: &mut LoggedIn, background: &mut Background, ui: &mut Ui) {
@@ -19,23 +19,23 @@ pub fn tweet_list(state: &mut LoggedIn, background: &mut Background, ui: &mut Ui
                 ui.horizontal(|ui| {
                     if let Some(user) = tweet.user.as_ref() {
                         ui.add(Label::new(RichText::new(&user.name).strong()));
-                        ui.separator();
-                        ui.hyperlink_to(
-                            "original",
-                            format!(
-                                "https://twitter.com/{}/status/{}",
-                                user.screen_name, tweet.id
-                            ),
-                        );
-                        ui.separator();
-                        ui.hyperlink_to(
-                            "user profile",
-                            format!("https://twitter.com/{}", user.screen_name),
-                        );
-                        ui.separator();
-                        if ui.add(ClickableLink::new("debug")).clicked() {
-                            state.debug_tweet = Some(tweet.clone());
-                        }
+                        // ui.separator();
+                        // ui.hyperlink_to(
+                        //     "original",
+                        //     format!(
+                        //         "https://twitter.com/{}/status/{}",
+                        //         user.screen_name, tweet.id
+                        //     ),
+                        // );
+                        // ui.separator();
+                        // ui.hyperlink_to(
+                        //     "user profile",
+                        //     format!("https://twitter.com/{}", user.screen_name),
+                        // );
+                        // ui.separator();
+                        // if ui.add(ClickableLink::new("debug")).clicked() {
+                        //     state.debug_tweet = Some(tweet.clone());
+                        // }
                     } else {
                         ui.add(Label::new(RichText::new("Could not load user").strong()));
                     }

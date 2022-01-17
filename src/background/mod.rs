@@ -7,7 +7,7 @@ use glium::glutin::event_loop::EventLoopProxy;
 use lazy_static::lazy_static;
 use std::{
     sync::{Arc, Mutex},
-    time::Duration,
+    time::Instant,
 };
 use tokio::sync::mpsc::{
     unbounded_channel, UnboundedReceiver as Receiver, UnboundedSender as Sender,
@@ -87,6 +87,7 @@ struct Runner {
     running: bool,
     config: Config,
     state: BackgroundState,
+    last_new_version_check: Instant,
 }
 
 impl Runner {
@@ -98,10 +99,12 @@ impl Runner {
             running: true,
             config,
             state: BackgroundState::NotLoggedIn,
+            last_new_version_check: Instant::now(),
         };
         if let Some(token) = result.config.twitter.get_token() {
             result.login_from_token(token).await;
         }
+        check_for_new_version(result.sender.clone());
         result
     }
 
@@ -112,11 +115,14 @@ impl Runner {
 
     async fn run(mut self) -> Result<(), ()> {
         while self.running {
-            let timeout = tokio::time::sleep(Duration::from_secs(1));
+            // once an hour, check for new versions
+            if self.last_new_version_check.elapsed().as_secs() > 60 * 60 {
+                self.last_new_version_check = Instant::now();
+                check_for_new_version(self.sender.clone());
+            }
 
             tokio::select! {
                 msg = self.receiver.recv() => self.handle_recv(msg).await,
-                _ = timeout => self.ping(),
             }
         }
         Ok(())
@@ -127,10 +133,6 @@ impl Runner {
             log::warn!(target: TARGET, "Could not send message to ui: {:?}", e);
             self.running = false;
         }
-    }
-
-    fn ping(&mut self) {
-        self.send_to_ui(ToUI::Ping);
     }
 
     async fn handle_recv(&mut self, recv: Option<ToBackground>) {
@@ -235,6 +237,45 @@ impl Runner {
     }
 }
 
+fn check_for_new_version(sender: EventLoopProxy<ToUI>) {
+    tokio::spawn(async move {
+        #[derive(serde::Deserialize)]
+        struct Release {
+            tag_name: String,
+            draft: bool,
+            prerelease: bool,
+            html_url: String,
+        }
+        let response = reqwest::Client::builder()
+            .user_agent("https://github.com/victorkoenders/twitter_client/")
+            .build()
+            .unwrap()
+            .get("https://api.github.com/repos/victorkoenders/twitter_client/releases")
+            .send()
+            .await;
+        let response = match response {
+            Ok(response) => response.json::<Vec<Release>>().await,
+            Err(e) => Err(e),
+        };
+
+        match response {
+            Ok(releases) => {
+                if let Some(release) = releases.into_iter().find(|r| !r.draft && !r.prerelease) {
+                    if release.tag_name != format!("v{}", env!("CARGO_PKG_VERSION")) {
+                        log::info!(target: "Version check", "New version available: v{} -> {}", env!("CARGO_PKG_VERSION"), release.tag_name);
+                        let _ = sender.send_event(ToUI::NewVersionAvailable {
+                            url: release.html_url,
+                        });
+                    }
+                }
+            }
+            Err(e) => {
+                log::warn!(target: "Version check", "Could not retrieve versions: {:?}", e)
+            }
+        }
+    });
+}
+
 enum BackgroundState {
     NotLoggedIn,
     Authing(twitter::AuthRequest),
@@ -271,7 +312,7 @@ enum ToBackground {
 
 #[derive(Debug)]
 pub enum ToUI {
-    Ping,
+    Repaint,
     Disconnect,
     Loading,
     LoggedIn {
@@ -285,4 +326,7 @@ pub enum ToUI {
         latest: Option<u64>,
     },
     ImageLoaded(image::ToUIImage),
+    NewVersionAvailable {
+        url: String,
+    },
 }

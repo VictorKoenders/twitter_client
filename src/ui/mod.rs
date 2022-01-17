@@ -25,7 +25,6 @@ impl Default for State {
 impl State {
     pub fn update(&mut self, background: &mut Background, msg: ToUI) {
         match (msg, &mut self.state) {
-            (ToUI::Ping, _) => {}
             (ToUI::Disconnect, x) => {
                 *x = TwitterState::LoggedOut(LoggedOut::with_error(String::from(
                     "Lost connection to server",

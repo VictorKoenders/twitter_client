@@ -16,6 +16,7 @@ pub struct LoggedIn {
     debug_tweet: Option<Tweet>,
     expanded_tweet: Option<Tweet>,
     loading_more: bool,
+    new_version_available: Option<String>,
 }
 
 impl LoggedIn {
@@ -28,6 +29,7 @@ impl LoggedIn {
             debug_tweet: None,
             expanded_tweet: None,
             loading_more: false,
+            new_version_available: None,
         })
     }
 
@@ -58,6 +60,9 @@ impl LoggedIn {
                     }
                 }
             }
+            ToUI::NewVersionAvailable { url } => {
+                self.new_version_available = Some(url);
+            }
             x => log::warn!(target: "UI", "Ignoring {:?}", x),
         }
     }
@@ -80,8 +85,13 @@ impl LoggedIn {
         SidePanel::left("tweet_list").show(ctx.ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.add(Label::new(RichText::new(&self.user.name).strong()));
+                ui.separator();
                 if ui.add(ClickableLink::new("log out")).clicked() {
                     ctx.background.logout();
+                }
+                if let Some(url) = self.new_version_available.as_ref() {
+                    ui.separator();
+                    ui.hyperlink_to("New version available", url);
                 }
             });
             ui.separator();
