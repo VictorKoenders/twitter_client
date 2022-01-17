@@ -2,6 +2,7 @@
 name = "twitter_client"
 version = "0.3.0"
 edition = "2021"
+license = "EUPL"
 
 [dependencies]
 bytes = "1.1.0"
