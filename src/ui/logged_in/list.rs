@@ -21,7 +21,6 @@ where
             background.load_newer();
             *loading_more = true;
         }
-        let mut tweet_clicked = None;
         for tweet in tweets.rev() {
             ui.separator();
             ui.vertical(|ui| {
@@ -47,7 +46,7 @@ where
                 if is_hovered {
                     ui.ctx().output().cursor_icon = CursorIcon::PointingHand;
                     if ui.ctx().input().pointer.any_click() {
-                        tweet_clicked = Some(tweet.clone());
+                        new_tweet = Some(tweet.clone());
                     }
                 }
             });
@@ -59,10 +58,6 @@ where
         {
             background.load_older();
             *loading_more = true;
-        }
-
-        if let Some(tweet) = tweet_clicked {
-            new_tweet = Some(tweet.clone());
         }
     });
     new_tweet
