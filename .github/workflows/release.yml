@@ -1,4 +1,6 @@
-on: release
+on:
+  release:
+    - created
 
 name: Build release
 
