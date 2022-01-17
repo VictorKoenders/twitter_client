@@ -1,7 +1,4 @@
-on:
-  push:
-    tags:
-      - '*'
+on: release
 
 name: Build release
 
@@ -39,15 +36,18 @@ jobs:
         run: |
           set -ex
           mkdir out
-          cp target/release/twitter_client out/
-          objcopy --only-keep-debug out/twitter_client out/twitter_client.pdb
-          strip --strip-debug --strip-unneeded out/twitter_client
+
+          objcopy --only-keep-debug twitter_client out/twitter_client.pdb
+          strip --strip-debug --strip-unneeded twitter_client
+          zip release.zip twitter_client twitter_client.pdb
+        working-directory: target/release/
       
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+      - name: Upload twitter_client to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: linux
-          path: out
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/release.zip
+          asset_name: Linux release.zip
 
   windows:
     name: Windows
@@ -74,11 +74,18 @@ jobs:
           TWITTER_CLIENT_ID: ${{ secrets.TWITTER_CLIENT_ID }}
           TWITTER_CLIENT_SECRET: ${{ secrets.TWITTER_CLIENT_SECRET }}
 
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+      - name: Collect artifacts
+        run: |
+          set -ex
+          mkdir out
+
+          zip release.zip twitter_client.exe twitter_client.pdb
+        working-directory: target/release/
+ 
+      - name: Upload twitter_client to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: windows
-          path: |
-            target/release/twitter_client.exe
-            target/release/twitter_client.pdb
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/release.zip
+          asset_name: Windows release.zip
 
