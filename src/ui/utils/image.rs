@@ -1,10 +1,8 @@
-use egui::{Vec2, Widget};
-use std::sync::Arc;
-
 use crate::image::{self, Key, LoadContext};
+use egui::{Vec2, Widget};
 
 pub struct Image {
-    context: Arc<LoadContext>,
+    context: LoadContext,
     size: Vec2,
 }
 

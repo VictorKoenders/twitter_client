@@ -13,7 +13,10 @@ use glium::glutin::{
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 struct RepaintSignal {
     proxy: std::sync::Mutex<glutin::event_loop::EventLoopProxy<ToUI>>,
@@ -49,8 +52,14 @@ fn main() {
         background,
     );
 
+    let mut last_image_cleanup = Instant::now();
+
     event_loop.run(move |event, _, control_flow| {
         let mut redraw = || {
+            if last_image_cleanup.elapsed().as_secs() >= 1 {
+                image::cleanup(&integration.frame);
+                last_image_cleanup = Instant::now();
+            }
             let (needs_repaint, mut tex_allocation_data, shapes) =
                 integration.update(display.gl_window().window());
             let clipped_meshes = integration.egui_glium.egui_ctx.tessellate(shapes);
@@ -78,6 +87,7 @@ fn main() {
             }
 
             for id in tex_allocation_data.destructions.drain(..) {
+                log::info!(target: "image", "Destroying texture {}", id);
                 painter.free_texture(id);
             }
 
