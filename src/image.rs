@@ -21,7 +21,7 @@ pub struct LoadContext(Arc<Inner>);
 impl Default for LoadContext {
     fn default() -> Self {
         Self(Arc::new(Inner {
-            result: RwLock::default(),
+            state: RwLock::default(),
             last_access: Cell::new(Instant::now()),
         }))
     }
@@ -34,47 +34,42 @@ impl LoadContext {
 
     fn set_error(&self, e: impl Into<String>) {
         self.accessed();
-        *self.0.result.write() = LoadingStatus::Error(e.into());
+        *self.0.state.write() = LoadingStatus::Error(e.into());
     }
     fn set_texture_id(&self, id: TextureId) {
         self.accessed();
-        *self.0.result.write() = LoadingStatus::Loaded(id);
+        *self.0.state.write() = LoadingStatus::Loaded(id);
     }
 
     pub fn get_texture_id(&self) -> Option<TextureId> {
         self.accessed();
-        self.0.result.read().as_texture()
+        self.0.state.read().as_texture()
     }
 
     pub fn get_error(&self) -> Option<String> {
         self.accessed();
-        self.0.result.read().as_error()
+        self.0.state.read().as_error()
     }
 }
 
 impl std::fmt::Debug for LoadContext {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let mut dbg = fmt.debug_struct("LoadContext");
-        let read = self.0.result.read();
-        if read.is_loading() {
-            dbg.field("loading", &true);
-        } else if let Some(id) = read.as_texture() {
-            dbg.field("texture_id", &id);
-        } else if let Some(e) = read.as_error() {
-            dbg.field("error", &e);
-        }
-
-        dbg.finish_non_exhaustive()
+        let read = self.0.state.read();
+        fmt.debug_struct("LoadContext")
+            .field("state", &*read)
+            .field("last_access", &self.0.last_access)
+            .finish_non_exhaustive()
     }
 }
 
 struct Inner {
-    result: RwLock<LoadingStatus>,
+    state: RwLock<LoadingStatus>,
     last_access: Cell<Instant>,
 }
 
 unsafe impl Sync for Inner {}
 
+#[derive(Debug)]
 enum LoadingStatus {
     Loading,
     Loaded(TextureId),
@@ -88,10 +83,6 @@ impl Default for LoadingStatus {
 }
 
 impl LoadingStatus {
-    fn is_loading(&self) -> bool {
-        matches!(self, Self::Loading)
-    }
-
     fn as_error(&self) -> Option<String> {
         match self {
             Self::Error(s) => Some(s.clone()),
@@ -230,7 +221,7 @@ pub fn cleanup(frame: &epi::Frame) {
                 continue;
             }
         };
-        let read = inner.result.read();
+        let read = inner.state.read();
         if let Some(id) = read.as_texture() {
             log::debug!(target: TARGET, "Cleaning up {:?}", id);
             frame.free_texture(id);
