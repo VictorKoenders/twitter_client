@@ -5,10 +5,7 @@ use self::config::Config;
 use crate::image;
 use glium::glutin::event_loop::EventLoopProxy;
 use lazy_static::lazy_static;
-use std::{
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+use std::{sync::Mutex, time::Instant};
 use tokio::sync::mpsc::{
     unbounded_channel, UnboundedReceiver as Receiver, UnboundedSender as Sender,
 };
@@ -157,7 +154,7 @@ impl Runner {
         }
     }
 
-    fn load_image(&self, key: image::Key, context: Arc<image::LoadContext>) {
+    fn load_image(&self, key: image::Key, context: image::LoadContext) {
         let sender = self.sender.clone();
         tokio::spawn(async move {
             if let Some(result) = image::load_image_async(key, context).await {
@@ -182,7 +179,7 @@ impl Runner {
             log::warn!(target: TARGET, "Could not load tweets; not logged in");
             return;
         };
-        let future = f(timeline.with_page_size(50));
+        let future = f(timeline.with_page_size(10));
         match future.await {
             Ok((new_timeline, tweets)) => {
                 log::info!(target: TARGET, "Loaded {} tweets", tweets.len());
@@ -222,9 +219,14 @@ impl Runner {
                 self.config.twitter.set_token(&user.token);
                 self.config.save();
 
+                let mut timeline = egg_mode::tweet::home_timeline(&user.token);
+                if let Some(last_tweet) = self.config.twitter.latest {
+                    timeline.min_id = Some(last_tweet);
+                }
+
                 self.state = BackgroundState::LoggedIn {
                     // user: user.clone(),
-                    timeline: Some(egg_mode::tweet::home_timeline(&user.token)),
+                    timeline: Some(timeline),
                 };
                 self.send_to_ui(ToUI::LoggedIn { user });
             }
@@ -285,7 +287,7 @@ enum BackgroundState {
     },
 }
 
-pub fn start_loading_image(key: image::Key, context: Arc<image::LoadContext>) {
+pub fn start_loading_image(key: image::Key, context: image::LoadContext) {
     let lock = SENDER.lock().unwrap();
     if let Some(sender) = lock.as_ref() {
         let _ = sender.send(ToBackground::LoadImage { key, context });
@@ -303,7 +305,7 @@ enum ToBackground {
     LoadNewerTweets,
     LoadImage {
         key: image::Key,
-        context: Arc<image::LoadContext>,
+        context: image::LoadContext,
     },
     SetLatestTweet {
         id: u64,
