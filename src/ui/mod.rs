@@ -6,7 +6,7 @@ mod logged_out;
 use self::logged_in::LoggedIn;
 use self::logged_out::LoggedOut;
 use crate::background::{Background, ToUI};
-use glium::glutin::event::VirtualKeyCode;
+use egui_with_background::winit::VirtualKeyCode;
 
 pub struct State {
     running: bool,
@@ -22,8 +22,26 @@ impl Default for State {
     }
 }
 
-impl State {
-    pub fn update(&mut self, background: &mut Background, msg: ToUI) {
+impl egui_with_background::App for State {
+    type Msg = ToUI;
+    type Background = Background;
+
+    fn title(&self) -> &'static str {
+        "Rusty twitter client"
+    }
+
+    fn is_running(&self) -> bool {
+        self.running
+    }
+
+    fn spawn_background(
+        &self,
+        proxy: egui_with_background::winit::EventLoopProxy<Self::Msg>,
+    ) -> Self::Background {
+        crate::background::spawn(proxy)
+    }
+
+    fn handle_message(&mut self, background: &mut Background, msg: ToUI) {
         match (msg, &mut self.state) {
             (ToUI::Disconnect, x) => {
                 *x = TwitterState::LoggedOut(LoggedOut::with_error(String::from(
@@ -39,18 +57,7 @@ impl State {
         }
     }
 
-    pub fn is_running(&self) -> bool {
-        self.running
-    }
-
-    pub fn draw(&mut self, ctx: &mut crate::Context) {
-        match &mut self.state {
-            TwitterState::LoggedOut(state) => state.draw(ctx),
-            TwitterState::LoggedIn(state) => state.draw(ctx),
-        }
-    }
-
-    pub fn key_pressed(&mut self, background: &mut Background, keycode: VirtualKeyCode) {
+    fn key_pressed(&mut self, background: &mut Background, keycode: VirtualKeyCode) {
         if keycode == VirtualKeyCode::Escape {
             self.running = false;
         }
@@ -58,7 +65,15 @@ impl State {
             state.key_pressed(background, keycode);
         }
     }
-    pub fn key_released(&mut self, _keycode: VirtualKeyCode) {}
+
+    fn key_released(&mut self, _background: &mut Background, _keycode: VirtualKeyCode) {}
+
+    fn draw(&mut self, ctx: &mut crate::Context) {
+        match &mut self.state {
+            TwitterState::LoggedOut(state) => state.draw(ctx),
+            TwitterState::LoggedIn(state) => state.draw(ctx),
+        }
+    }
 }
 
 enum TwitterState {

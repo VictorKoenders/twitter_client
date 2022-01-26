@@ -2,24 +2,17 @@ mod config;
 pub mod twitter;
 
 use self::config::Config;
-use crate::image;
-use glium::glutin::event_loop::EventLoopProxy;
-use lazy_static::lazy_static;
-use std::{sync::Mutex, time::Instant};
+use egui_with_background::{image, winit::EventLoopProxy};
+use std::time::Instant;
 use tokio::sync::mpsc::{
     unbounded_channel, UnboundedReceiver as Receiver, UnboundedSender as Sender,
 };
 
 const TARGET: &str = "Background";
 
-lazy_static! {
-    static ref SENDER: Mutex<Option<Sender<ToBackground>>> = Mutex::default();
-}
-
 pub fn spawn(proxy: EventLoopProxy<ToUI>) -> Background {
     // let (to_ui, from_ui) = unbounded_channel::<ToUI>();
     let (to_backend, from_backend) = unbounded_channel::<ToBackground>();
-    *SENDER.lock().unwrap() = Some(to_backend.clone());
     std::thread::spawn(move || {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_io()
@@ -76,6 +69,16 @@ impl Background {
     }
 
     pub fn logout(&self) {}
+}
+
+impl egui_with_background::Background for Background {
+    fn start_loading_image(
+        &self,
+        key: egui_with_background::image::Key,
+        context: egui_with_background::image::LoadContext,
+    ) {
+        self.send(ToBackground::LoadImage { key, context })
+    }
 }
 
 struct Runner {
@@ -287,13 +290,6 @@ enum BackgroundState {
     },
 }
 
-pub fn start_loading_image(key: image::Key, context: image::LoadContext) {
-    let lock = SENDER.lock().unwrap();
-    if let Some(sender) = lock.as_ref() {
-        let _ = sender.send(ToBackground::LoadImage { key, context });
-    }
-}
-
 #[derive(Debug)]
 enum ToBackground {
     OpenTwitterLogin,
@@ -331,4 +327,21 @@ pub enum ToUI {
     NewVersionAvailable {
         url: String,
     },
+}
+
+impl egui_with_background::RepaintSignalMessage for ToUI {
+    fn repaint_signal() -> Self {
+        Self::Repaint
+    }
+
+    fn is_repaint_signal(&self) -> bool {
+        matches!(self, Self::Repaint)
+    }
+
+    fn is_image_loaded_response(&self) -> Option<egui_with_background::image::ToUIImage> {
+        match self {
+            Self::ImageLoaded(img) => Some(img.clone()),
+            _ => None,
+        }
+    }
 }

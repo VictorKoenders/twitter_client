@@ -5,7 +5,7 @@ use super::utils::*;
 use crate::background::{twitter::User, Background, ToUI};
 use egg_mode::tweet::Tweet;
 use egui::*;
-use glium::glutin::event::VirtualKeyCode;
+use egui_with_background::winit::VirtualKeyCode;
 use std::collections::VecDeque;
 
 pub struct LoggedIn {

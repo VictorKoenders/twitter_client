@@ -5,24 +5,23 @@ edition = "2021"
 license = "EUPL"
 
 [dependencies]
-bytes = "1.1"
 dotenv = "0.15"
 egg-mode = "0.16"
-egui = "0.16"
-egui_glium = "0.16"
-epi = "0.16"
-futures = "0.3"
-glium = "0.31"
-image = "0.23"
-lazy_static = "1.4"
 log = "0.4"
 open = "2.0"
-parking_lot = "0.11"
 pretty_env_logger = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.15", features = ["time", "macros"] }
 toml = "0.5"
+egui = "0.16"
+
+[dependencies.reqwest]
+version = "0.11"
+features = ["json"]
+
+[dependencies.egui_with_background]
+git = "https://github.com/victorkoenders/egui_with_background/"
+features = ["reqwest"]
 
 [build-dependencies]
 dotenv = "0.15"
