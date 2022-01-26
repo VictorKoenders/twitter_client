@@ -1,0 +1,75 @@
+import { List, Button } from "../utils.60";
+import { Style } from "../style.60";
+
+struct TweetListItem := {
+	id: int,
+	sender: string,
+	date: string,
+	text: string,
+}
+
+export TweetList := VerticalLayout {
+	property <string> name: "Trangar";
+	property <[TweetListItem]> items: [
+		{ id: 1, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 2, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 3, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 4, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 5, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 6, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 7, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 8, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+		{ id: 9, sender: "foo", date: "01/22 07:58", text: "Hello world" },
+	];
+	property <int> activeId: 0;
+
+	HorizontalLayout {
+		Text {
+			text: name;
+
+			color: Style.text;
+			font-weight: Style.text_weight_important;
+		}
+		Button {
+			text: "Log out";
+		}
+	}
+	
+	List {
+		Button {
+			height: 32px;
+			text: "Load newer";
+		}
+		for item in items: Rectangle {
+			touch := TouchArea {
+				mouse-cursor: MouseCursor.pointer;
+				clicked => { 
+					activeId = item.id;
+				}
+			}
+			background: touch.has-hover || item.id == activeId ? Style.background_hover : Style.background;
+			VerticalLayout {
+				HorizontalLayout { 
+					Text {
+						text: item.sender;
+
+						color: Style.text;
+						font-weight: Style.text_weight_important;
+					}
+					Text {
+						text: item.date;
+						color: Style.text_unimportant;
+					}
+				}
+				Text {
+					color: Style.text;
+					text: item.text;
+				}
+			}
+		}
+		Button {
+			height: 32px;
+			text: "Load older";
+		}
+	}
+}

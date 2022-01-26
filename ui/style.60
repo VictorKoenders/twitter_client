@@ -1,0 +1,12 @@
+import { Palette } from "sixtyfps_widgets_impl.60";
+
+export global Style := {
+	property<color> background: rgb(24, 24, 24);
+	property<color> background_hover: rgb(70, 70, 70);
+	property<color> background_active: rgb(36, 36, 36);
+	property<color> background_disabled: rgb(60, 60, 60);
+
+	property<color> text: rgb(180, 180, 180);
+	property<int> text_weight_important: 900;
+	property<color> text_unimportant: rgb(140, 140, 140);
+}

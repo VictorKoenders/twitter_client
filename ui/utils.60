@@ -1,0 +1,40 @@
+import { Style } from "./style.60";
+import { ScrollView } from "sixtyfps_widgets.60";
+
+export Button := Rectangle {
+	callback clicked <=> touch.clicked;
+    property<string> text <=> text.text;
+    property<bool> enabled <=> touch.enabled;
+
+    border-width: 1px;
+    border-radius: 2px;
+	background: touch.has-hover ? Style.background-hover
+				: Style.background-active;
+	
+	// min-height: 32px;
+
+	l := HorizontalLayout {
+		padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        padding-top: 3px;
+        padding-bottom: 3px;
+
+        text := Text {
+            color: Style.text;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            font-weight: 600;
+        }
+	}
+
+	touch := TouchArea {
+		mouse-cursor: MouseCursor.pointer;
+	}
+}
+
+export List := ScrollView {
+	VerticalLayout { 
+		@children
+	}
+}

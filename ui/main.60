@@ -1,0 +1,32 @@
+import { TweetList } from "./tweet/list.60";
+import { TweetDetail } from "./tweet/detail.60";
+import { Style } from "./style.60";
+
+MainWindow := Window {
+	callback arrowUpPressed;
+	callback arrowDownPressed;
+	property tweetList <=> tweetListInner;
+
+	background: Style.background;
+	min-width: 800px;
+	min-height: 600px;
+
+	HorizontalLayout { 
+		tweetListInner := TweetList {}
+		TweetDetail {}
+	}
+
+
+    FocusScope {
+        key-pressed(event) => {
+            if (event.text == Keys.UpArrow) {
+				arrowUpPressed();
+                return accept;
+            } else if (event.text == Keys.DownArrow) {
+				arrowDownPressed();
+                return accept;
+            }
+            reject
+        }
+    }
+}

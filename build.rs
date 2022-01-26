@@ -27,4 +27,6 @@ fn main() {
         twitter_secret
     )
     .unwrap();
+
+    sixtyfps_build::compile("ui/main.60").unwrap();
 }
