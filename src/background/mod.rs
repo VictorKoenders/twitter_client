@@ -176,18 +176,28 @@ impl Runner {
     where
         F: FnOnce(egg_mode::tweet::Timeline) -> egg_mode::tweet::TimelineFuture,
     {
-        let timeline = if let BackgroundState::LoggedIn { timeline, .. } = &mut self.state {
-            timeline.take().unwrap()
+        let timeline = if let BackgroundState::LoggedIn(state) = &mut self.state {
+            state.timeline.take().unwrap()
         } else {
             log::warn!(target: TARGET, "Could not load tweets; not logged in");
             return;
         };
+        let min_id = timeline.min_id;
+        let max_id = timeline.max_id;
         let future = f(timeline.with_page_size(10));
         match future.await {
-            Ok((new_timeline, tweets)) => {
+            Ok((mut new_timeline, tweets)) => {
+                new_timeline.min_id = new_timeline.min_id.min(min_id).or(min_id);
+                new_timeline.max_id = new_timeline.max_id.max(max_id).or(max_id);
                 log::info!(target: TARGET, "Loaded {} tweets", tweets.len());
-                if let BackgroundState::LoggedIn { timeline, .. } = &mut self.state {
-                    *timeline = Some(new_timeline);
+                log::info!(
+                    target: TARGET,
+                    "Min: {:?}, max: {:?}",
+                    new_timeline.min_id,
+                    new_timeline.max_id
+                );
+                if let BackgroundState::LoggedIn(state) = &mut self.state {
+                    state.timeline = Some(new_timeline);
                     self.send_to_ui(ToUI::Tweets {
                         tweets: tweets.response,
                         latest: self.config.twitter.latest,
@@ -201,6 +211,15 @@ impl Runner {
                 self.send_to_ui(ToUI::Error {
                     error: e.to_string(),
                 });
+                if let BackgroundState::LoggedIn(state) = &mut self.state {
+                    // reset timeline
+                    state.timeline = Some({
+                        let mut timeline = egg_mode::tweet::home_timeline(&state.user.token);
+                        timeline.min_id = min_id;
+                        timeline.max_id = max_id;
+                        timeline
+                    })
+                }
             }
         }
     }
@@ -227,10 +246,10 @@ impl Runner {
                     timeline.min_id = Some(last_tweet);
                 }
 
-                self.state = BackgroundState::LoggedIn {
-                    // user: user.clone(),
+                self.state = BackgroundState::LoggedIn(Box::new(LoggedIn {
+                    user: user.clone(),
                     timeline: Some(timeline),
-                };
+                }));
                 self.send_to_ui(ToUI::LoggedIn { user });
             }
             Err(e) => {
@@ -284,10 +303,12 @@ fn check_for_new_version(sender: EventLoopProxy<ToUI>) {
 enum BackgroundState {
     NotLoggedIn,
     Authing(twitter::AuthRequest),
-    LoggedIn {
-        // user: twitter::User,
-        timeline: Option<egg_mode::tweet::Timeline>,
-    },
+    LoggedIn(Box<LoggedIn>),
+}
+
+struct LoggedIn {
+    user: twitter::User,
+    timeline: Option<egg_mode::tweet::Timeline>,
 }
 
 #[derive(Debug)]

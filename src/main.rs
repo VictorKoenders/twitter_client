@@ -4,6 +4,8 @@ mod background;
 mod ui;
 
 fn main() {
+    let _ = dotenv::dotenv();
+    pretty_env_logger::init();
     egui_with_background::run(ui::State::default());
 }
 
