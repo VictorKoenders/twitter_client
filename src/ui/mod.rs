@@ -3,8 +3,7 @@ pub mod utils;
 mod logged_in;
 mod logged_out;
 
-use self::logged_in::LoggedIn;
-use self::logged_out::LoggedOut;
+use self::{logged_in::LoggedIn, logged_out::LoggedOut};
 use crate::background::{Background, ToUI};
 use egui_with_background::winit::VirtualKeyCode;
 

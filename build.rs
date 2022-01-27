@@ -1,5 +1,4 @@
-use std::io::Write;
-use std::{env, fs::File, path::Path};
+use std::{env, fs::File, io::Write, path::Path};
 
 fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
