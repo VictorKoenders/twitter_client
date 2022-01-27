@@ -2320,7 +2320,7 @@ checksum = "4ccbe8381883510b6a2d8f1e32905bddd178c11caef8083086d0c0c9ab0ac281"
 
 [[package]]
 name = "twitter_client"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "dotenv",
  "egg-mode",
