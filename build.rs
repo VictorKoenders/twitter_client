@@ -15,13 +15,13 @@ fn main() {
     let dest_path = Path::new(&out_dir).join("twitter_credentials.rs");
     let mut file = File::create(dest_path).unwrap();
     writeln!(
-        &mut file,
+        file,
         "const fn twitter_id() -> &'static str {{ {:?} }}",
         twitter_id
     )
     .unwrap();
     writeln!(
-        &mut file,
+        file,
         "const fn twitter_secret() -> &'static str {{ {:?} }}",
         twitter_secret
     )
