@@ -8,7 +8,7 @@ license = "EUPL"
 dotenv = "0.15"
 egg-mode = "0.16"
 log = "0.4"
-open = "2.1"
+open = "3.0"
 pretty_env_logger = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.18", features = ["time", "macros"] }
